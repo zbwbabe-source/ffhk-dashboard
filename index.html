@@ -1,112 +1,180 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>F&F HK/TW Dashboard</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background-color: #f3f4f6;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-    .header {
-      background-color: #111827;
-      color: white;
-      padding: 12px 20px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .title {
-      font-weight: 700;
-      font-size: 18px;
-      margin-right: 20px;
-    }
-    .tab {
-      padding: 8px 16px;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-      background-color: #374151;
-      color: white;
-      transition: all 0.2s;
-    }
-    .tab:hover {
-      background-color: #4b5563;
-    }
-    .tab.active {
-      background-color: #f97316;
-      font-weight: 600;
-    }
-    .content {
-      flex: 1;
-      position: relative;
-    }
-    iframe {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      border: none;
-      background-color: white;
-    }
-    .loading {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: #6b7280;
-      font-size: 14px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F&F HK/TW Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 60px;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+        
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+        
+        .card-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+        
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 12px;
+        }
+        
+        .card-description {
+            color: #6b7280;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        .card-link {
+            display: inline-flex;
+            align-items: center;
+            color: #667eea;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+        
+        .card-link::after {
+            content: "→";
+            margin-left: 8px;
+            transition: margin-left 0.3s ease;
+        }
+        
+        .card:hover .card-link::after {
+            margin-left: 12px;
+        }
+        
+        .icon-hk {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        .icon-tw {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        
+        .icon-bs {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+        
+        footer {
+            text-align: center;
+            color: white;
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="header">
-    <div class="title">F&F HK/TW Dashboard</div>
-    <button class="tab active" onclick="switchTab('hk-oct')">홍콩 25년 10월</button>
-    <button class="tab" onclick="switchTab('tw-oct')">대만 25년 10월</button>
-    <button class="tab" onclick="switchTab('hk-bs')">홍콩법인 BS</button>
-  </div>
-  
-  <div class="content">
-    <div class="loading" id="loading">Loading...</div>
-    <iframe id="frame" src="hk-oct.html"></iframe>
-  </div>
-
-  <script>
-    function switchTab(page) {
-      // 탭 활성화 스타일
-      document.querySelectorAll('.tab').forEach(tab => {
-        tab.classList.remove('active');
-      });
-      event.target.classList.add('active');
-      
-      // iframe 소스 변경
-      const frame = document.getElementById('frame');
-      const loading = document.getElementById('loading');
-      
-      loading.style.display = 'block';
-      frame.style.opacity = '0';
-      
-      frame.src = page + '.html';
-      
-      frame.onload = function() {
-        loading.style.display = 'none';
-        frame.style.opacity = '1';
-      };
-    }
-  </script>
+    <div class="container">
+        <header>
+            <h1>F&F 재무 대시보드</h1>
+            <p class="subtitle">홍콩 · 대만 법인 재무 보고서</p>
+        </header>
+        
+        <div class="cards">
+            <a href="https://claude.ai/public/artifacts/44343d02-5077-46f2-96df-5d805fab1a2c" target="_blank" class="card">
+                <div class="card-icon icon-hk">🇭🇰</div>
+                <h2 class="card-title">홍콩 2025년 10월</h2>
+                <p class="card-description">
+                    홍콩 법인 2025년 10월 월간 재무 보고서 및 성과 분석
+                </p>
+                <span class="card-link">보고서 열기</span>
+            </a>
+            
+            <a href="https://claude.ai/public/artifacts/d92240ad-5fdf-491b-b6d0-6f6e7f2bf120" target="_blank" class="card">
+                <div class="card-icon icon-tw">🇹🇼</div>
+                <h2 class="card-title">대만 2025년 10월</h2>
+                <p class="card-description">
+                    대만 법인 2025년 10월 월간 재무 보고서 및 성과 분석
+                </p>
+                <span class="card-link">보고서 열기</span>
+            </a>
+            
+            <a href="https://claude.ai/public/artifacts/7c73b144-6d13-4a00-936b-cbe0afb11755" target="_blank" class="card">
+                <div class="card-icon icon-bs">📊</div>
+                <h2 class="card-title">홍콩법인 BS</h2>
+                <p class="card-description">
+                    홍콩 법인 대차대조표(Balance Sheet) 및 재무상태표
+                </p>
+                <span class="card-link">보고서 열기</span>
+            </a>
+        </div>
+        
+        <footer>
+            <p>© 2025 F&F Dashboard · 모든 보고서는 새 탭에서 열립니다</p>
+        </footer>
+    </div>
 </body>
 </html>
