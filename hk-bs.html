@@ -1,0 +1,1646 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F&F 홍콩 2025 3Q 재무제표 대시보드</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+            background-color: #f5f5f5;
+        }
+        
+        .nav-container {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-tabs {
+            display: flex;
+            max-width: 1800px;
+            margin: 0 auto;
+            flex-wrap: wrap;
+        }
+        .nav-tab {
+            padding: 15px 40px;
+            color: white;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 15px;
+            transition: all 0.3s;
+            position: relative;
+            flex: 1;
+            min-width: 200px;
+        }
+        .nav-tab:hover { background-color: rgba(255,255,255,0.1); }
+        .nav-tab.active {
+            background-color: rgba(255,255,255,0.25);
+        }
+        .nav-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #ffd700, #ffed4e);
+        }
+        
+        .sheet-container {
+            display: none;
+            max-width: 1800px;
+            margin: 20px auto;
+            background: white;
+            padding: 40px;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+            border-radius: 8px;
+        }
+        .sheet-container.active { display: block; }
+        
+        h1 {
+            font-size: 24px;
+            margin-bottom: 25px;
+            color: #1e3c72;
+            font-weight: 700;
+            border-left: 5px solid #2a5298;
+            padding-left: 15px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            border: 1px solid #e0e0e0;
+            padding: 12px 10px;
+            text-align: right;
+        }
+        td[style*="border: none"] {
+            border: none !important;
+        }
+        th {
+            background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
+            color: white;
+            font-weight: 600;
+            text-align: center;
+            font-size: 13px;
+        }
+        td:first-child {
+            text-align: left;
+            width: 280px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        tbody tr { transition: background-color 0.2s; }
+        tbody tr:hover { background-color: #f8f9fa; }
+        
+        .section-header {
+            font-weight: bold;
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            color: #1565c0;
+            cursor: pointer;
+            user-select: none;
+        }
+        .section-header:hover {
+            background: linear-gradient(135deg, #bbdefb 0%, #90caf9 100%);
+        }
+        .section-header td::before {
+            content: '▼ ';
+            font-size: 10px;
+            margin-right: 5px;
+            transition: transform 0.2s;
+            display: inline-block;
+        }
+        .section-header td:first-child::before {
+            content: '▼ ';
+        }
+        .section-header td:not(:first-child)::before {
+            content: '';
+        }
+        .section-header.collapsed td:first-child::before {
+            transform: rotate(-90deg);
+        }
+        
+        .subsection-row { transition: all 0.2s; }
+        .subsection-row.hidden { display: none; }
+        .subsection { padding-left: 30px; }
+        
+        .total-row {
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff9e6 0%, #fff3cd 100%);
+        }
+        .total-row td {
+            border-top: 2px solid #ffd700 !important;
+            border-bottom: 2px solid #ffd700 !important;
+        }
+        .total-row td[style*="border: none"] {
+            border: none !important;
+        }
+        .total-row td:first-child {
+            text-align: center;
+            color: #1e3c72;
+            font-size: 14px;
+        }
+        
+        .negative { color: #d32f2f; font-weight: 600; }
+        .positive { color: #2e7d32; font-weight: 600; }
+        
+        .toggle-all {
+            margin-bottom: 15px;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(42,82,152,0.3);
+            transition: all 0.3s;
+        }
+        .toggle-all:hover {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            transform: translateY(-2px);
+        }
+        
+        .summary-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 40px;
+        }
+        .summary-section {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-left: 5px solid #2a5298;
+            padding: 28px;
+            margin-bottom: 28px;
+            border-radius: 8px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+            transition: all 0.3s;
+        }
+        .summary-section:hover {
+            box-shadow: 0 5px 25px rgba(0,0,0,0.12);
+            transform: translateY(-2px);
+        }
+        .summary-title {
+            color: #1e3c72;
+            font-size: 19px;
+            font-weight: 700;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+        }
+        .summary-icon {
+            margin-right: 12px;
+            font-size: 26px;
+        }
+        .summary-content {
+            color: #333;
+            line-height: 1.9;
+            font-size: 14px;
+        }
+        .summary-header {
+            text-align: center;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 45px;
+            font-size: 32px;
+            font-weight: 800;
+        }
+        
+        .highlight-yellow { background-color: #fff9c4; }
+    </style>
+</head>
+<body>
+    <div class="nav-container">
+        <div class="nav-tabs">
+            <button class="nav-tab active" data-sheet="summary">경영 요약</button>
+            <button class="nav-tab" data-sheet="bs">1. 재무상태표</button>
+            <button class="nav-tab" data-sheet="cf">2. 현금흐름표</button>
+        </div>
+    </div>
+
+    <div id="summary-sheet" class="sheet-container">
+        <div class="summary-container">
+            <h1 class="summary-header">F&F 홍콩 2025 3Q 누적 재무 성과 종합 분석</h1>
+            
+            <div style="margin-bottom: 35px; padding: 28px; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); border-radius: 8px; box-shadow: 0 4px 20px rgba(30,60,114,0.3);">
+                <div style="text-align: center; color: white;">
+                    <div style="font-size: 15px; font-weight: 600; margin-bottom: 12px; opacity: 0.9;">📌 한줄 요약 (2025년 9월 YTD 누적 기준)</div>
+                    <div style="font-size: 18px; font-weight: 700; line-height: 1.6;">
+                        매출 6.9% 감소(△21.7백만 HKD)에 할인율 증가(홍콩 +4.1%p, 마카오 +1.8%p)와<br>
+                        재고평가손실 149% 급증(+4.1백만 HKD)으로 매출총이익률 3.2%p 하락,<br>
+                        영업손실 5.8백만 HKD, 당기순손실 6.0백만 HKD 기록하며 수익성 악화 지속
+                    </div>
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
+                <div style="display: flex; flex-direction: column; gap: 25px;">
+                    <div class="summary-section">
+                        <div class="summary-title">
+                            <span class="summary-icon">📊</span> 수익성 분석 (YTD 1-9월 누적)
+                        </div>
+                        <div class="summary-content">
+                            <strong style="color: #d32f2f;">매출 및 마진 감소 (24년 YTD → 25년 YTD)</strong><br>
+                            • 매출액: 316.1백만 HKD → 294.4백만 HKD (-6.9%, △21.7백만 HKD)<br>
+                            • 매출원가: 136.3백만 HKD → 136.3백만 HKD (+0.0%)<br>
+                            &nbsp;&nbsp;- 상품매출원가: 133.5백만 → 129.5백만 HKD (-3.0%)<br>
+                            &nbsp;&nbsp;- 재고평가손실: 2.7백만 → 6.8백만 HKD (+149.4%, +4.1백만 HKD)<br>
+                            • 매출총이익: 179.8백만 HKD → 158.1백만 HKD (-12.1%, △21.7백만 HKD)<br>
+                            • 매출총이익률: 56.9% → 53.7% (△3.2%p)<br><br>
+                            
+                            <strong style="color: #1565c0;">마진율 하락 원인 (YTD 기준)</strong><br>
+                            • 할인율 증가: 홍콩 +4.1%p, 마카오 +1.8%p<br>
+                            • 재고평가손실 증가: 과시즌 재고 증가로 평가손실 2.5배 증가<br><br>
+                            
+                            <strong style="color: #d32f2f;">영업 적자 전환 (YTD 기준)</strong><br>
+                            • 판매비와관리비: 170.6백만 → 164.0백만 HKD (-3.9%, △6.6백만 HKD)<br>
+                            &nbsp;&nbsp;- 임차료: 72.2백만 → 65.1백만 HKD (-9.8%)<br>
+                            &nbsp;&nbsp;- 감가상각비: 18.0백만 → 11.7백만 HKD (-35.0%)<br>
+                            &nbsp;&nbsp;- 리스조정효과: △8.0백만 → △1.8백만 HKD<br>
+                            • 영업이익: 9.3백만 HKD → -5.8백만 HKD (적자전환, △15.1백만 HKD)<br>
+                            • 영업이익률: 2.9% → -2.0% (△4.9%p)<br>
+                            • 당기순이익: 3.4백만 HKD → -6.0백만 HKD (적자전환, △9.4백만 HKD)
+                        </div>
+                    </div>
+                    
+                    <div class="summary-section">
+                        <div class="summary-title">
+                            <span class="summary-icon">💰</span> 재무 현황 (재무상태표)
+                        </div>
+                        <div class="summary-content">
+                            <strong>자산 구조 (24년 12월 → 25년 12월 E)</strong><br>
+                            • 총자산: 355.2백만 HKD → 352.5백만 HKD (-0.8%, △2.8백만 HKD)<br>
+                            • 현금: 32.1백만 HKD → 24.1백만 HKD (-24.8%, △8.0백만 HKD)<br>
+                            • 재고자산: 186.0백만 HKD → 150.3백만 HKD (-19.2%, △35.7백만 HKD)<br>
+                            • 사용권자산: 60.4백만 HKD → 88.0백만 HKD (+45.7%, +27.6백만 HKD)<br>
+                            • 유형자산: 13.1백만 HKD → 21.4백만 HKD (+63.2%, +8.3백만 HKD)<br><br>
+                            
+                            <strong style="color: #d32f2f;">부채 구조 (24년 12월 → 25년 12월 E)</strong><br>
+                            • 총부채: 342.9백만 HKD → 336.4백만 HKD (-1.9%, △6.5백만 HKD)<br>
+                            • 매입채무: 133.3백만 HKD → 103.3백만 HKD (-22.5%, △30.0백만 HKD)<br>
+                            • 매입채무(TP): 115.5백만 HKD → 123.7백만 HKD (+7.1%, +8.2백만 HKD)<br>
+                            • 리스부채(유동+비유동): 59.4백만 HKD → 94.9백만 HKD (+59.7%, +35.5백만 HKD)<br>
+                            • 부채비율: 2,783% → 2,097% (TP채무 제외시 133%)<br><br>
+                            
+                            <strong style="color: #f57c00;">자본 구조 (24년 12월 → 25년 12월 E)</strong><br>
+                            • 총자본: 12.3백만 HKD → 16.0백만 HKD (+30.2%, +3.7백만 HKD)<br>
+                            • 자본금: 20.0백만 HKD (변동없음)<br>
+                            • 기타자본: △3.1백만 HKD → 0백만 HKD (+3.1백만 HKD)<br>
+                            • 이익잉여금: △4.5백만 HKD → △4.0백만 HKD (적자 축소, +0.6백만 HKD)
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="summary-section" style="height: 100%;">
+                        <div class="summary-title">
+                            <span class="summary-icon">🔍</span> 심층 분석
+                        </div>
+                        <div class="summary-content">
+                            <strong style="color: #d32f2f;">수익성 감소 요인 (YTD 1-9월 기준)</strong><br>
+                            • 매출 6.9% 감소로 영업 기반 위축<br>
+                            • 할인율 증가(홍콩 +4.1%p, 마카오 +1.8%p)로 마진율 하락<br>
+                            • 재고평가손실 149% 증가(2.7백만 → 6.8백만 HKD)<br>
+                            • 과시즌 재고 소진 부진: 22FW 재고 전년비 1400% 증가<br><br>
+                            
+                            <strong style="color: #f57c00;">재고 관리 이슈 (재무상태표 기준)</strong><br>
+                            • 24년 12월 재고: 186.0백만 HKD<br>
+                            • 25년 9월 재고: 189.7백만 HKD (전년 9월비 +2.0%)<br>
+                            • 25년 12월 재고(E): 150.3백만 HKD (24년 말 대비 -19.2%)<br>
+                            • 4Q 재고 소진 계획: 39.4백만 HKD (20.8% 감소 목표)<br>
+                            • 3년 경과 재고(22SS) 폐기 예정: 원가 기준 1.7억 HKD<br><br>
+                            
+                            <strong style="color: #1565c0;">비용 구조 변화 (YTD 1-9월 기준)</strong><br>
+                            • 임차료: 72.2백만 → 65.1백만 HKD (-9.8%, △7.1백만 HKD)<br>
+                            • 감가상각비: 18.0백만 → 11.7백만 HKD (-35.0%, △6.3백만 HKD)<br>
+                            • 리스조정효과: △8.0백만 → △1.8백만 HKD (조정폭 축소)<br>
+                            • 급여: 32.5백만 → 34.7백만 HKD (+6.7%)<br>
+                            • 광고선전비: 8.5백만 → 9.2백만 HKD (+8.6%)<br><br>
+                            
+                            <strong style="color: #2e7d32;">현금흐름 분석 (24년 연간 → 25년 연간 E)</strong><br>
+                            • 영업활동 현금흐름: 12.9백만 → 11.4백만 HKD (-11.2%)<br>
+                            • 투자활동 현금유출: 7.6백만 → 24.5백만 HKD (+223%)<br>
+                            • 기말 현금: 32.1백만 → 19.1백만 HKD (-40.4%)<br>
+                            • 현금 보유 수준: 월평균 운영비 약 1.2개월분<br><br>
+                            
+                            <strong style="color: #2e7d32;">개선 조치 현황</strong><br>
+                            • 임차료 할인 협상 완료: LCX 22%, Megamall 15%<br>
+                            • 타임스퀘어 임시 할인매장 운영으로 과시즌 재고 소진<br>
+                            • 온라인 매출 250% 성장 (자사몰 432% 성장)<br>
+                            • 부실 매장 정리 진행: V City, WTC 종료<br>
+                            • 4Q 재고 감축 계획: 25년 말 150백만 HKD 목표
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="pl-sheet" class="sheet-container">
+        <h1>1. 손익계산서 (P/L) - 2025년 1월~9월 누적 (YTD) 비교</h1>
+        
+        <div style="margin-bottom: 25px; padding: 20px; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); border-radius: 8px; box-shadow: 0 4px 15px rgba(30,60,114,0.25);">
+            <div style="text-align: center; color: white;">
+                <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px; opacity: 0.9;">📌 YTD 누적 한줄 요약 (24.01-09 → 25.01-09)</div>
+                <div style="font-size: 16px; font-weight: 700; line-height: 1.5;">
+                    매출 6.9% 감소(△21.7백만 HKD)에 할인율 증가(홍콩 +4.1%p, 마카오 +1.8%p)와 재고평가손실 149% 증가(+4.1백만 HKD)로<br>
+                    매출총이익률 3.2%p 하락(56.9% → 53.7%), 영업이익 적자 전환(9.3백만 → -5.8백만 HKD), 당기순손실 6.0백만 HKD 기록
+                </div>
+            </div>
+        </div>
+        
+        <button class="toggle-all" id="toggle-pl">전체 접기/펴기</button>
+        <table>
+            <thead>
+                <tr>
+                    <th>계정과목</th>
+                    <th>2024년 9월 YTD (천 HKD)</th>
+                    <th>2025년 9월 YTD (천 HKD)</th>
+                    <th>증감액 (천 HKD)</th>
+                    <th>증감율(%)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="total-row">
+                    <td>매출액</td>
+                    <td>316,099</td>
+                    <td>294,401</td>
+                    <td class="negative">△21,698</td>
+                    <td class="negative">93.1%</td>
+                </tr>
+                
+                <tr class="section-header" data-section="cogs">
+                    <td>매출원가</td>
+                    <td>136,260</td>
+                    <td>136,279</td>
+                    <td class="positive">+19</td>
+                    <td class="positive">100.0%</td>
+                </tr>
+                <tr class="subsection-row cogs-row hidden">
+                    <td class="subsection">상품매출원가</td>
+                    <td>133,522</td>
+                    <td>129,450</td>
+                    <td class="negative">△4,072</td>
+                    <td class="negative">97.0%</td>
+                </tr>
+                <tr class="subsection-row cogs-row hidden">
+                    <td class="subsection">재고평가손실</td>
+                    <td>2,738</td>
+                    <td>6,829</td>
+                    <td class="positive">+4,091</td>
+                    <td class="positive">249.4%</td>
+                </tr>
+                
+                <tr class="total-row">
+                    <td>매출총이익</td>
+                    <td>179,839</td>
+                    <td>158,123</td>
+                    <td class="negative">△21,716</td>
+                    <td class="negative">87.9%</td>
+                </tr>
+                <tr style="background: linear-gradient(135deg, #fff9e6 0%, #fff3cd 100%); font-weight: 600;">
+                    <td style="text-align: center; color: #1e3c72;">매출총이익률</td>
+                    <td>56.9%</td>
+                    <td>53.7%</td>
+                    <td class="negative">△3.2%p</td>
+                    <td>-</td>
+                </tr>
+                <tr style="background: #f0f8ff; font-size: 12px; color: #666;">
+                    <td colspan="5" style="padding: 10px 15px; text-align: left; border: none;">
+                        💡 <strong style="color: #1565c0;">매출총이익률 하락 원인:</strong> 할인율 증가 (홍콩 +4.1%p, 마카오 +1.8%p) 및 재고평가손실 149% 급증(2.7백만 → 6.8백만 HKD)으로 매출원가율 상승
+                    </td>
+                </tr>
+                
+                <tr class="section-header" data-section="opex">
+                    <td>판매비와관리비</td>
+                    <td>170,585</td>
+                    <td>163,956</td>
+                    <td class="negative">△6,629</td>
+                    <td class="negative">96.1%</td>
+                </tr>
+                <tr class="subsection-row opex-row hidden">
+                    <td class="subsection">급여</td>
+                    <td>32,512</td>
+                    <td>34,698</td>
+                    <td class="positive">+2,186</td>
+                    <td class="positive">106.7%</td>
+                </tr>
+                <tr class="subsection-row opex-row hidden">
+                    <td class="subsection">복리후생비</td>
+                    <td>624</td>
+                    <td>697</td>
+                    <td class="positive">+73</td>
+                    <td class="positive">111.7%</td>
+                </tr>
+                <tr class="subsection-row opex-row hidden">
+                    <td class="subsection">여비교통비</td>
+                    <td>201</td>
+                    <td>448</td>
+                    <td class="positive">+247</td>
+                    <td class="positive">222.4%</td>
+                </tr>
+                <tr class="subsection-row opex-row hidden">
+                    <td class="subsection">통신비</td>
+                    <td>297</td>
+                    <td>305</td>
+                    <td class="positive">+8</td>
+                    <td class="positive">102.7%</td>
+                </tr>
+                <tr class="subsection-row opex-row hidden">
+                    <td class="subsection">피복비</td>
+                    <td>173</td>
+                    <td>154</td>
+                    <td class="negative">△19</td>
+                    <td class="negative">89.0%</td>
+                </tr>
+                <tr class="subsection-row opex-row hidden">
+                    <td class="subsection">운반비</td>
+                    <td>18,443</td>
+                    <td>17,585</td>
+                    <td class="negative">△858</td>
+                    <td class="negative">95.3%</td>
+                </tr>
+                <tr class="subsection-row opex-row hidden">
+                    <td class="subsection">수도광열비</td>
+                    <td>1,584</td>
+                    <td>1,725</td>
+                    <td class="positive">+141</td>
+                    <td class="positive">108.9%</td>
+                </tr>
+                <tr class="subsection-row opex-row hidden">
+                    <td class="subsection">소모품비</td>
+                    <td>1,181</td>
+                    <td>2,264</td>
+                    <td class="positive">+1,083</td>
+                    <td class="positive">191.7%</td>
+                </tr>
+                <tr class="subsection-row opex-row hidden">
+                    <td class="subsection">임차료</td>
+                    <td>72,151</td>
+                    <td>65,072</td>
+                    <td class="negative">△7,079</td>
+                    <td class="negative">90.2%</td>
+                </tr>
+                <tr class="subsection-row opex-row hidden">
+                    <td class="subsection">감가상각비</td>
+                    <td>17,965</td>
+                    <td>11,680</td>
+                    <td class="negative">△6,285</td>
+                    <td class="negative">65.0%</td>
+                </tr>
+                <tr class="subsection-row opex-row hidden">
+                    <td class="subsection">무형자산상각비</td>
+                    <td>155</td>
+                    <td>20</td>
+                    <td class="negative">△135</td>
+                    <td class="negative">12.7%</td>
+                </tr>
+                <tr class="subsection-row opex-row hidden">
+                    <td class="subsection">광고선전비</td>
+                    <td>8,502</td>
+                    <td>9,237</td>
+                    <td class="positive">+735</td>
+                    <td class="positive">108.6%</td>
+                </tr>
+                <tr class="subsection-row opex-row hidden">
+                    <td class="subsection">지급수수료_일반</td>
+                    <td>17,355</td>
+                    <td>17,773</td>
+                    <td class="positive">+418</td>
+                    <td class="positive">102.4%</td>
+                </tr>
+                <tr class="subsection-row opex-row hidden">
+                    <td class="subsection">지급수수료_이전가격조정</td>
+                    <td>4,307</td>
+                    <td>0</td>
+                    <td class="negative">△4,307</td>
+                    <td class="negative">0.0%</td>
+                </tr>
+                <tr class="subsection-row opex-row hidden">
+                    <td class="subsection">수선유지비</td>
+                    <td>1,440</td>
+                    <td>2,180</td>
+                    <td class="positive">+740</td>
+                    <td class="positive">151.4%</td>
+                </tr>
+                <tr class="subsection-row opex-row hidden">
+                    <td class="subsection">보험료</td>
+                    <td>1,671</td>
+                    <td>1,919</td>
+                    <td class="positive">+248</td>
+                    <td class="positive">114.8%</td>
+                </tr>
+                <tr class="subsection-row opex-row hidden">
+                    <td class="subsection">리스조정효과</td>
+                    <td class="negative">-7,976</td>
+                    <td class="negative">-1,801</td>
+                    <td class="positive">+6,175</td>
+                    <td class="positive">22.6%</td>
+                </tr>
+                
+                <tr class="total-row">
+                    <td>영업이익</td>
+                    <td>9,253</td>
+                    <td class="negative">-5,833</td>
+                    <td class="negative">△15,086</td>
+                    <td class="negative">-</td>
+                </tr>
+                <tr style="background: linear-gradient(135deg, #fff9e6 0%, #fff3cd 100%); font-weight: 600;">
+                    <td style="text-align: center; color: #1e3c72;">영업이익률</td>
+                    <td>2.9%</td>
+                    <td class="negative">-2.0%</td>
+                    <td class="negative">△4.9%p</td>
+                    <td>-</td>
+                </tr>
+                
+                <tr class="section-header" data-section="other">
+                    <td>기타이익</td>
+                    <td>113</td>
+                    <td>134</td>
+                    <td class="positive">+21</td>
+                    <td class="positive">119.0%</td>
+                </tr>
+                <tr class="subsection-row other-row hidden">
+                    <td class="subsection">잡이익</td>
+                    <td>113</td>
+                    <td>134</td>
+                    <td class="positive">+21</td>
+                    <td class="positive">119.0%</td>
+                </tr>
+                
+                <tr class="section-header" data-section="othercost">
+                    <td>기타비용</td>
+                    <td>2</td>
+                    <td>244</td>
+                    <td class="positive">+242</td>
+                    <td>-</td>
+                </tr>
+                <tr class="subsection-row othercost-row hidden">
+                    <td class="subsection">유형자산처분손실</td>
+                    <td>0</td>
+                    <td>243</td>
+                    <td class="positive">+243</td>
+                    <td>-</td>
+                </tr>
+                <tr class="subsection-row othercost-row hidden">
+                    <td class="subsection">잡손실</td>
+                    <td>2</td>
+                    <td>1</td>
+                    <td class="negative">△1</td>
+                    <td class="negative">41.9%</td>
+                </tr>
+                
+                <tr class="section-header" data-section="finance">
+                    <td>금융수익</td>
+                    <td>1,181</td>
+                    <td>1,648</td>
+                    <td class="positive">+467</td>
+                    <td class="positive">139.5%</td>
+                </tr>
+                <tr class="subsection-row finance-row hidden">
+                    <td class="subsection">이자수익</td>
+                    <td>816</td>
+                    <td>677</td>
+                    <td class="negative">△139</td>
+                    <td class="negative">83.0%</td>
+                </tr>
+                <tr class="subsection-row finance-row hidden">
+                    <td class="subsection">외환차익</td>
+                    <td>365</td>
+                    <td>971</td>
+                    <td class="positive">+606</td>
+                    <td class="positive">265.8%</td>
+                </tr>
+                
+                <tr class="section-header" data-section="financecost">
+                    <td>금융원가</td>
+                    <td>4,039</td>
+                    <td>1,903</td>
+                    <td class="negative">△2,136</td>
+                    <td class="negative">47.1%</td>
+                </tr>
+                <tr class="subsection-row financecost-row hidden">
+                    <td class="subsection">이자비용</td>
+                    <td>3,665</td>
+                    <td>1,805</td>
+                    <td class="negative">△1,860</td>
+                    <td class="negative">49.3%</td>
+                </tr>
+                <tr class="subsection-row financecost-row hidden">
+                    <td class="subsection">외환차손</td>
+                    <td>374</td>
+                    <td>98</td>
+                    <td class="negative">△276</td>
+                    <td class="negative">26.1%</td>
+                </tr>
+                
+                <tr class="total-row">
+                    <td>법인세비용차감전순이익</td>
+                    <td>6,506</td>
+                    <td class="negative">-6,198</td>
+                    <td class="negative">△12,704</td>
+                    <td class="negative">-</td>
+                </tr>
+                
+                <tr class="section-header" data-section="tax">
+                    <td>법인세비용</td>
+                    <td>3,110</td>
+                    <td class="negative">-194</td>
+                    <td class="negative">△3,304</td>
+                    <td class="negative">-</td>
+                </tr>
+                
+                <tr class="total-row">
+                    <td>당기순이익(손실)</td>
+                    <td>3,396</td>
+                    <td class="negative">-6,004</td>
+                    <td class="negative">△9,400</td>
+                    <td class="negative">-</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div id="pl3q-sheet" class="sheet-container">
+        <h1>1-2. 손익계산서 (P/L) - 2025년 7월~9월 (3Q 분기) 비교</h1>
+        
+        <div style="margin-bottom: 25px; padding: 20px; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); border-radius: 8px; box-shadow: 0 4px 15px rgba(30,60,114,0.25);">
+            <div style="text-align: center; color: white;">
+                <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px; opacity: 0.9;">📌 3Q 분기 한줄 요약 (24.07-09 → 25.07-09)</div>
+                <div style="font-size: 16px; font-weight: 700; line-height: 1.5;">
+                    매출 7.5% 증가(+6.7백만 HKD)에도 매출원가 11.0% 증가로 매출총이익 4.5% 증가에 그쳤으며,<br>
+                    판관비 25.5% 증가(+11.6백만 HKD, 리스조정효과 포함)로 영업손실 6.9백만 HKD, 당기순손실 7.2백만 HKD 기록
+                </div>
+            </div>
+        </div>
+        
+        <button class="toggle-all" id="toggle-pl3q">전체 접기/펴기</button>
+        <table>
+            <thead>
+                <tr>
+                    <th>계정과목</th>
+                    <th>2024년 7-9월 (천 HKD)</th>
+                    <th>2025년 7-9월 (천 HKD)</th>
+                    <th>증감액 (천 HKD)</th>
+                    <th>증감율(%)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="total-row">
+                    <td>매출액</td>
+                    <td>89,108</td>
+                    <td>95,761</td>
+                    <td class="positive">+6,653</td>
+                    <td class="positive">107.5%</td>
+                </tr>
+                
+                <tr class="section-header" data-section="cogs3q">
+                    <td>매출원가</td>
+                    <td>40,891</td>
+                    <td>45,379</td>
+                    <td class="positive">+4,488</td>
+                    <td class="positive">111.0%</td>
+                </tr>
+                <tr class="subsection-row cogs3q-row hidden">
+                    <td class="subsection">상품매출원가</td>
+                    <td>38,861</td>
+                    <td>42,856</td>
+                    <td class="positive">+3,995</td>
+                    <td class="positive">110.3%</td>
+                </tr>
+                <tr class="subsection-row cogs3q-row hidden">
+                    <td class="subsection">재고평가손실</td>
+                    <td>2,030</td>
+                    <td>2,522</td>
+                    <td class="positive">+492</td>
+                    <td class="positive">124.2%</td>
+                </tr>
+                
+                <tr class="total-row">
+                    <td>매출총이익</td>
+                    <td>48,217</td>
+                    <td>50,382</td>
+                    <td class="positive">+2,165</td>
+                    <td class="positive">104.5%</td>
+                </tr>
+                <tr style="background: linear-gradient(135deg, #fff9e6 0%, #fff3cd 100%); font-weight: 600;">
+                    <td style="text-align: center; color: #1e3c72;">매출총이익률</td>
+                    <td>54.1%</td>
+                    <td>52.6%</td>
+                    <td class="negative">△1.5%p</td>
+                    <td>-</td>
+                </tr>
+                
+                <tr class="section-header" data-section="opex3q">
+                    <td>판매비와관리비</td>
+                    <td>45,609</td>
+                    <td>57,251</td>
+                    <td class="positive">+11,642</td>
+                    <td class="positive">125.5%</td>
+                </tr>
+                <tr class="subsection-row opex3q-row hidden">
+                    <td class="subsection">급여</td>
+                    <td>9,884</td>
+                    <td>12,176</td>
+                    <td class="positive">+2,292</td>
+                    <td class="positive">123.2%</td>
+                </tr>
+                <tr class="subsection-row opex3q-row hidden">
+                    <td class="subsection">복리후생비</td>
+                    <td>211</td>
+                    <td>233</td>
+                    <td class="positive">+22</td>
+                    <td class="positive">110.3%</td>
+                </tr>
+                <tr class="subsection-row opex3q-row hidden">
+                    <td class="subsection">여비교통비</td>
+                    <td>85</td>
+                    <td>202</td>
+                    <td class="positive">+117</td>
+                    <td class="positive">237.0%</td>
+                </tr>
+                <tr class="subsection-row opex3q-row hidden">
+                    <td class="subsection">통신비</td>
+                    <td>101</td>
+                    <td>104</td>
+                    <td class="positive">+3</td>
+                    <td class="positive">103.3%</td>
+                </tr>
+                <tr class="subsection-row opex3q-row hidden">
+                    <td class="subsection">피복비</td>
+                    <td>1</td>
+                    <td>97</td>
+                    <td class="positive">+96</td>
+                    <td>-</td>
+                </tr>
+                <tr class="subsection-row opex3q-row hidden">
+                    <td class="subsection">운반비</td>
+                    <td>6,157</td>
+                    <td>5,766</td>
+                    <td class="negative">△391</td>
+                    <td class="negative">93.6%</td>
+                </tr>
+                <tr class="subsection-row opex3q-row hidden">
+                    <td class="subsection">수도광열비</td>
+                    <td>581</td>
+                    <td>661</td>
+                    <td class="positive">+80</td>
+                    <td class="positive">113.9%</td>
+                </tr>
+                <tr class="subsection-row opex3q-row hidden">
+                    <td class="subsection">소모품비</td>
+                    <td>390</td>
+                    <td>1,071</td>
+                    <td class="positive">+681</td>
+                    <td class="positive">274.4%</td>
+                </tr>
+                <tr class="subsection-row opex3q-row hidden">
+                    <td class="subsection">임차료</td>
+                    <td>22,831</td>
+                    <td>20,868</td>
+                    <td class="negative">△1,963</td>
+                    <td class="negative">91.4%</td>
+                </tr>
+                <tr class="subsection-row opex3q-row hidden">
+                    <td class="subsection">감가상각비</td>
+                    <td>5,901</td>
+                    <td>1,654</td>
+                    <td class="negative">△4,247</td>
+                    <td class="negative">28.0%</td>
+                </tr>
+                <tr class="subsection-row opex3q-row hidden">
+                    <td class="subsection">무형자산상각비</td>
+                    <td>64</td>
+                    <td>20</td>
+                    <td class="negative">△44</td>
+                    <td class="negative">30.7%</td>
+                </tr>
+                <tr class="subsection-row opex3q-row hidden">
+                    <td class="subsection">광고선전비</td>
+                    <td>2,378</td>
+                    <td>3,302</td>
+                    <td class="positive">+924</td>
+                    <td class="positive">138.9%</td>
+                </tr>
+                <tr class="subsection-row opex3q-row hidden">
+                    <td class="subsection">지급수수료_일반</td>
+                    <td>5,245</td>
+                    <td>6,771</td>
+                    <td class="positive">+1,526</td>
+                    <td class="positive">129.1%</td>
+                </tr>
+                <tr class="subsection-row opex3q-row hidden">
+                    <td class="subsection">지급수수료_이전가격조정</td>
+                    <td class="negative">-6,836</td>
+                    <td>0</td>
+                    <td class="positive">+6,836</td>
+                    <td>-</td>
+                </tr>
+                <tr class="subsection-row opex3q-row hidden">
+                    <td class="subsection">수선유지비</td>
+                    <td>604</td>
+                    <td>616</td>
+                    <td class="positive">+12</td>
+                    <td class="positive">102.0%</td>
+                </tr>
+                <tr class="subsection-row opex3q-row hidden">
+                    <td class="subsection">보험료</td>
+                    <td>559</td>
+                    <td>699</td>
+                    <td class="positive">+140</td>
+                    <td class="positive">125.0%</td>
+                </tr>
+                <tr class="subsection-row opex3q-row hidden">
+                    <td class="subsection">리스조정효과</td>
+                    <td class="negative">-2,547</td>
+                    <td>3,011</td>
+                    <td class="positive">+5,558</td>
+                    <td>-</td>
+                </tr>
+                
+                <tr class="total-row">
+                    <td>영업이익</td>
+                    <td>2,609</td>
+                    <td class="negative">-6,869</td>
+                    <td class="negative">△9,478</td>
+                    <td class="negative">-</td>
+                </tr>
+                <tr style="background: linear-gradient(135deg, #fff9e6 0%, #fff3cd 100%); font-weight: 600;">
+                    <td style="text-align: center; color: #1e3c72;">영업이익률</td>
+                    <td>2.9%</td>
+                    <td class="negative">-7.2%</td>
+                    <td class="negative">△10.1%p</td>
+                    <td>-</td>
+                </tr>
+                
+                <tr class="section-header" data-section="other3q">
+                    <td>기타이익</td>
+                    <td>21</td>
+                    <td>39</td>
+                    <td class="positive">+18</td>
+                    <td class="positive">184.4%</td>
+                </tr>
+                <tr class="subsection-row other3q-row hidden">
+                    <td class="subsection">잡이익</td>
+                    <td>21</td>
+                    <td>39</td>
+                    <td class="positive">+18</td>
+                    <td class="positive">184.4%</td>
+                </tr>
+                
+                <tr class="section-header" data-section="othercost3q">
+                    <td>기타비용</td>
+                    <td>2</td>
+                    <td>1</td>
+                    <td class="negative">△1</td>
+                    <td class="negative">60.3%</td>
+                </tr>
+                <tr class="subsection-row othercost3q-row hidden">
+                    <td class="subsection">유형자산처분손실</td>
+                    <td>0</td>
+                    <td>1</td>
+                    <td class="positive">+1</td>
+                    <td>-</td>
+                </tr>
+                <tr class="subsection-row othercost3q-row hidden">
+                    <td class="subsection">잡손실</td>
+                    <td>2</td>
+                    <td>0</td>
+                    <td class="negative">△2</td>
+                    <td class="negative">2.0%</td>
+                </tr>
+                
+                <tr class="section-header" data-section="finance3q">
+                    <td>금융수익</td>
+                    <td>381</td>
+                    <td>83</td>
+                    <td class="negative">△298</td>
+                    <td class="negative">21.9%</td>
+                </tr>
+                <tr class="subsection-row finance3q-row hidden">
+                    <td class="subsection">이자수익</td>
+                    <td>268</td>
+                    <td>235</td>
+                    <td class="negative">△33</td>
+                    <td class="negative">87.7%</td>
+                </tr>
+                <tr class="subsection-row finance3q-row hidden">
+                    <td class="subsection">외환차익</td>
+                    <td>113</td>
+                    <td class="negative">-152</td>
+                    <td class="negative">△265</td>
+                    <td class="negative">-</td>
+                </tr>
+                
+                <tr class="section-header" data-section="financecost3q">
+                    <td>금융원가</td>
+                    <td>995</td>
+                    <td>894</td>
+                    <td class="negative">△101</td>
+                    <td class="negative">89.8%</td>
+                </tr>
+                <tr class="subsection-row financecost3q-row hidden">
+                    <td class="subsection">이자비용</td>
+                    <td>1,122</td>
+                    <td>887</td>
+                    <td class="negative">△235</td>
+                    <td class="negative">79.1%</td>
+                </tr>
+                <tr class="subsection-row financecost3q-row hidden">
+                    <td class="subsection">외환차손</td>
+                    <td class="negative">-126</td>
+                    <td>7</td>
+                    <td class="positive">+133</td>
+                    <td>-</td>
+                </tr>
+                
+                <tr class="total-row">
+                    <td>법인세비용차감전순이익</td>
+                    <td>2,014</td>
+                    <td class="negative">-7,642</td>
+                    <td class="negative">△9,656</td>
+                    <td class="negative">-</td>
+                </tr>
+                
+                <tr class="section-header" data-section="tax3q">
+                    <td>법인세비용</td>
+                    <td>2,014</td>
+                    <td class="negative">-415</td>
+                    <td class="negative">△2,429</td>
+                    <td class="negative">-</td>
+                </tr>
+                
+                <tr class="total-row">
+                    <td>당기순이익(손실)</td>
+                    <td class="negative">0</td>
+                    <td class="negative">-7,228</td>
+                    <td class="negative">△7,228</td>
+                    <td class="negative">-</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div id="bs-sheet" class="sheet-container active">
+        <h1>2. 재무상태표 (B/S)</h1>
+        
+        <div style="margin-bottom: 25px; padding: 20px; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); border-radius: 8px; box-shadow: 0 4px 15px rgba(30,60,114,0.25);">
+            <div style="text-align: center; color: white;">
+                <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px; opacity: 0.9;">📌 재무상태표 한줄 요약 (24.12 → 25.12 E)</div>
+                <div style="font-size: 16px; font-weight: 700; line-height: 1.5;">
+                    재고 21% 감소(△38백만 HKD)와 현금 19% 감소(△6백만 HKD)로 유동자산 10% 감소(△25백만 HKD),<br>
+                    사용권자산 44% 증가(+26백만 HKD)로 비유동자산 36% 증가(+35백만 HKD), 부채 2% 증가(+6백만 HKD)로<br>
+                    부채비율 2,236% 기록 (TP채무 제외 시 부채비율 196%, 자기자본비율 26.1%로 정상 재무구조)
+                </div>
+            </div>
+        </div>
+        
+        <button class="toggle-all" id="toggle-bs">전체 접기/펴기</button>
+        <table>
+            <thead>
+                <tr>
+                    <th>계정과목</th>
+                    <th>2024.12 (천 HKD)</th>
+                    <th>2025.10 (천 HKD)</th>
+                    <th>2025.12 (E) (천 HKD)</th>
+                    <th>증감액 (천 HKD)</th>
+                    <th>증감율(%)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="section-header" data-section="asset">
+                    <td>자산총계</td>
+                    <td>355,225</td>
+                    <td>395,344</td>
+                    <td>364,995</td>
+                    <td class="positive">+9,770</td>
+                    <td class="positive">102.8%</td>
+                </tr>
+                
+                <tr class="subsection-row asset-row hidden" style="background: #f5f5f5;">
+                    <td class="subsection" style="background: #f5f5f5; font-weight: 600;">Ⅰ. 유동자산</td>
+                    <td style="background: #f5f5f5;">257,921</td>
+                    <td style="background: #f5f5f5;">249,961</td>
+                    <td style="background: #f5f5f5;">232,554</td>
+                    <td class="negative" style="background: #f5f5f5;">△25,367</td>
+                    <td class="negative" style="background: #f5f5f5;">90.2%</td>
+                </tr>
+                
+                <tr class="subsection-row asset-row hidden">
+                    <td style="padding-left: 50px; font-weight: 600;">(1) 당좌자산</td>
+                    <td>71,948</td>
+                    <td>60,311</td>
+                    <td>84,896</td>
+                    <td class="positive">+12,948</td>
+                    <td class="positive">118.0%</td>
+                </tr>
+                <tr class="subsection-row asset-row hidden">
+                    <td style="padding-left: 70px;">현금및현금성자산</td>
+                    <td>32,082</td>
+                    <td>24,682</td>
+                    <td>26,092</td>
+                    <td class="negative">△5,990</td>
+                    <td class="negative">81.3%</td>
+                </tr>
+                <tr class="subsection-row asset-row hidden">
+                    <td style="padding-left: 70px;">매출채권</td>
+                    <td>20,956</td>
+                    <td>15,938</td>
+                    <td>38,888</td>
+                    <td class="positive">+17,932</td>
+                    <td class="positive">185.6%</td>
+                </tr>
+                <tr class="subsection-row asset-row hidden">
+                    <td style="padding-left: 70px;">기타당좌자산</td>
+                    <td>18,910</td>
+                    <td>19,691</td>
+                    <td>19,916</td>
+                    <td class="positive">+1,006</td>
+                    <td class="positive">105.3%</td>
+                </tr>
+                
+                <tr class="subsection-row asset-row hidden">
+                    <td style="padding-left: 50px; font-weight: 600;">(2) 재고자산</td>
+                    <td>185,973</td>
+                    <td>189,650</td>
+                    <td>147,658</td>
+                    <td class="negative">△38,315</td>
+                    <td class="negative">79.4%</td>
+                </tr>
+                
+                <tr class="subsection-row asset-row hidden" style="background: #f5f5f5;">
+                    <td class="subsection" style="background: #f5f5f5; font-weight: 600;">Ⅱ. 비유동자산</td>
+                    <td style="background: #f5f5f5;">97,304</td>
+                    <td style="background: #f5f5f5;">145,383</td>
+                    <td style="background: #f5f5f5;">132,441</td>
+                    <td class="positive" style="background: #f5f5f5;">+35,137</td>
+                    <td class="positive" style="background: #f5f5f5;">136.1%</td>
+                </tr>
+                
+                <tr class="subsection-row asset-row hidden">
+                    <td style="padding-left: 50px; font-weight: 600;">(1) 유형자산</td>
+                    <td>13,094</td>
+                    <td>17,108</td>
+                    <td>19,985</td>
+                    <td class="positive">+6,891</td>
+                    <td class="positive">152.6%</td>
+                </tr>
+                
+                <tr class="subsection-row asset-row hidden">
+                    <td style="padding-left: 50px; font-weight: 600;">(2) 무형자산</td>
+                    <td>0</td>
+                    <td>1,153</td>
+                    <td>0</td>
+                    <td>-</td>
+                    <td>-</td>
+                </tr>
+                
+                <tr class="subsection-row asset-row hidden">
+                    <td style="padding-left: 50px; font-weight: 600;">(3) 사용권자산</td>
+                    <td>60,360</td>
+                    <td>99,803</td>
+                    <td>86,758</td>
+                    <td class="positive">+26,398</td>
+                    <td class="positive">143.7%</td>
+                </tr>
+                
+                <tr class="subsection-row asset-row hidden">
+                    <td style="padding-left: 50px; font-weight: 600;">(4) 기타비유동자산</td>
+                    <td>23,850</td>
+                    <td>27,320</td>
+                    <td>25,698</td>
+                    <td class="positive">+1,848</td>
+                    <td class="positive">107.7%</td>
+                </tr>
+                <tr class="subsection-row asset-row hidden">
+                    <td style="padding-left: 70px;">비유동보증금</td>
+                    <td>14,228</td>
+                    <td>16,040</td>
+                    <td>15,982</td>
+                    <td class="positive">+1,754</td>
+                    <td class="positive">112.3%</td>
+                </tr>
+                <tr class="subsection-row asset-row hidden">
+                    <td style="padding-left: 70px;">이연법인세자산</td>
+                    <td>9,622</td>
+                    <td>11,280</td>
+                    <td>9,716</td>
+                    <td class="positive">+94</td>
+                    <td class="positive">101.0%</td>
+                </tr>
+                
+                <tr class="section-header" data-section="liab">
+                    <td>부채총계</td>
+                    <td>342,903</td>
+                    <td>385,854</td>
+                    <td>349,369</td>
+                    <td class="positive">+6,466</td>
+                    <td class="positive">101.9%</td>
+                </tr>
+                
+                <tr class="subsection-row liab-row hidden" style="background: #f5f5f5;">
+                    <td class="subsection" style="background: #f5f5f5; font-weight: 600;">Ⅰ. 유동부채</td>
+                    <td style="background: #f5f5f5;">313,828</td>
+                    <td style="background: #f5f5f5;">333,374</td>
+                    <td style="background: #f5f5f5;">286,214</td>
+                    <td class="negative" style="background: #f5f5f5;">△27,614</td>
+                    <td class="negative" style="background: #f5f5f5;">91.2%</td>
+                </tr>
+                <tr class="subsection-row liab-row hidden">
+                    <td style="padding-left: 50px;">매입채무</td>
+                    <td>134,175</td>
+                    <td>155,682</td>
+                    <td>113,916</td>
+                    <td class="negative">△20,259</td>
+                    <td class="negative">84.9%</td>
+                </tr>
+                <tr class="subsection-row liab-row hidden">
+                    <td style="padding-left: 50px;">매입채무(TP)</td>
+                    <td>114,579</td>
+                    <td>105,705</td>
+                    <td>107,602</td>
+                    <td class="negative">△6,977</td>
+                    <td class="negative">93.9%</td>
+                </tr>
+                <tr class="subsection-row liab-row hidden">
+                    <td style="padding-left: 50px;">미지급금</td>
+                    <td>15,121</td>
+                    <td>12,870</td>
+                    <td>16,034</td>
+                    <td class="positive">+913</td>
+                    <td class="positive">106.0%</td>
+                </tr>
+                <tr class="subsection-row liab-row hidden">
+                    <td style="padding-left: 50px;">유동성리스부채</td>
+                    <td>39,021</td>
+                    <td>52,605</td>
+                    <td>41,228</td>
+                    <td class="positive">+2,207</td>
+                    <td class="positive">105.7%</td>
+                </tr>
+                <tr class="subsection-row liab-row hidden">
+                    <td style="padding-left: 50px;">기타유동부채</td>
+                    <td>10,933</td>
+                    <td>6,512</td>
+                    <td>7,434</td>
+                    <td class="negative">△3,499</td>
+                    <td class="negative">68.0%</td>
+                </tr>
+                
+                <tr class="subsection-row liab-row hidden" style="background: #f5f5f5;">
+                    <td class="subsection" style="background: #f5f5f5; font-weight: 600;">Ⅱ. 비유동부채</td>
+                    <td style="background: #f5f5f5;">29,075</td>
+                    <td style="background: #f5f5f5;">52,480</td>
+                    <td style="background: #f5f5f5;">63,154</td>
+                    <td class="positive" style="background: #f5f5f5;">+34,079</td>
+                    <td class="positive" style="background: #f5f5f5;">217.2%</td>
+                </tr>
+                <tr class="subsection-row liab-row hidden">
+                    <td style="padding-left: 50px;">비유동성리스부채</td>
+                    <td>20,406</td>
+                    <td>49,317</td>
+                    <td>61,296</td>
+                    <td class="positive">+40,890</td>
+                    <td class="positive">300.3%</td>
+                </tr>
+                <tr class="subsection-row liab-row hidden">
+                    <td style="padding-left: 50px;">기타비유동부채</td>
+                    <td>8,668</td>
+                    <td>3,162</td>
+                    <td>1,858</td>
+                    <td class="negative">△6,810</td>
+                    <td class="negative">21.4%</td>
+                </tr>
+                
+                <tr class="section-header" data-section="equity">
+                    <td>자본총계</td>
+                    <td>12,322</td>
+                    <td>9,490</td>
+                    <td>15,626</td>
+                    <td class="positive">+3,304</td>
+                    <td class="positive">126.8%</td>
+                </tr>
+                
+                <tr class="subsection-row equity-row hidden">
+                    <td class="subsection">Ⅰ. 자본금</td>
+                    <td>20,000</td>
+                    <td>20,000</td>
+                    <td>20,000</td>
+                    <td>-</td>
+                    <td>100.0%</td>
+                </tr>
+                <tr class="subsection-row equity-row hidden">
+                    <td class="subsection">Ⅱ. 기타자본</td>
+                    <td class="negative">-3,142</td>
+                    <td>30</td>
+                    <td>0</td>
+                    <td class="positive">+3,142</td>
+                    <td>-</td>
+                </tr>
+                <tr class="subsection-row equity-row hidden">
+                    <td class="subsection">Ⅲ. 이익잉여금</td>
+                    <td class="negative">-4,536</td>
+                    <td class="negative">-10,540</td>
+                    <td class="negative">-4,374</td>
+                    <td class="positive">+162</td>
+                    <td class="positive">96.4%</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div style="margin-top: 30px; padding: 25px; background: linear-gradient(135deg, #fff9e6 0%, #fff3cd 100%); border-radius: 8px; border-left: 5px solid #ffa726;">
+            <h3 style="color: #e65100; margin-bottom: 20px; font-size: 17px; font-weight: 700;">
+                <span style="font-size: 20px; margin-right: 8px;">📊</span>재무비율 분석
+            </h3>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; font-size: 14px;">
+                <div style="background: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+                    <div style="color: #666; font-size: 13px; margin-bottom: 8px;">부채비율</div>
+                    <div style="font-size: 22px; font-weight: 700; color: #d32f2f;">2,236%</div>
+                    <div style="color: #999; font-size: 12px; margin-top: 4px;">24년: 2,783%</div>
+                    <div style="color: #2e7d32; font-size: 12px; margin-top: 6px; font-weight: 600;">TP채무 제외시: 196%</div>
+                </div>
+                <div style="background: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+                    <div style="color: #666; font-size: 13px; margin-bottom: 8px;">유동비율</div>
+                    <div style="font-size: 22px; font-weight: 700; color: #d32f2f;">81%</div>
+                    <div style="color: #999; font-size: 12px; margin-top: 4px;">(24년 82%)</div>
+                    <div style="color: #2e7d32; font-size: 12px; margin-top: 6px; font-weight: 600;">TP채무 제외시: 130%</div>
+                </div>
+                <div style="background: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+                    <div style="color: #666; font-size: 13px; margin-bottom: 8px;">당좌비율</div>
+                    <div style="font-size: 22px; font-weight: 700; color: #d32f2f;">30%</div>
+                    <div style="color: #999; font-size: 12px; margin-top: 4px;">(24년 23%)</div>
+                    <div style="color: #2e7d32; font-size: 12px; margin-top: 6px; font-weight: 600;">TP채무 제외시: 48%</div>
+                </div>
+                <div style="background: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+                    <div style="color: #666; font-size: 13px; margin-bottom: 8px;">자기자본비율</div>
+                    <div style="font-size: 22px; font-weight: 700; color: #f57c00;">4.3%</div>
+                    <div style="color: #999; font-size: 12px; margin-top: 4px;">(24년 3.5%)</div>
+                    <div style="color: #2e7d32; font-size: 12px; margin-top: 6px; font-weight: 600;">TP채무 제외시: 26.1%</div>
+                </div>
+            </div>
+            <div style="margin-top: 18px; padding-top: 18px; border-top: 1px solid #ffe082; color: #666; font-size: 13px; line-height: 1.7;">
+                <strong style="color: #e65100;">💡 해석:</strong><br>
+                • <strong>부채비율 2,236%:</strong> 자본금 20백만 HKD 대비 부채 349백만 HKD (TP채무 제외시 196% - 정상 수준)<br>
+                • <strong>유동비율 81%:</strong> 유동자산 233백만 HKD 대비 유동부채 286백만 HKD (TP채무 제외시 130% - 양호)<br>
+                • <strong>당좌비율 30%:</strong> 재고 제외 시 단기 지급능력 (TP채무 제외시 48% - 개선)<br>
+                • <strong>자기자본비율 4.3%:</strong> 총자산 대비 자본 비중 (TP채무 제외시 26.1% - 안정적)<br>
+                • <strong style="color: #2e7d32;">TP채무 조정:</strong> 매입채무(TP) 108백만 HKD는 전기이전 이전가격 조정분으로, 부채(-) 및 자본(+) 동시 조정<br>
+                • <strong style="color: #2e7d32;">실질 재무구조:</strong> 조정 후 부채 242백만 HKD, 조정 후 자본 123백만 HKD
+            </div>
+        </div>
+        
+        <div style="margin-top: 20px; padding: 25px; background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%); border-radius: 8px; border-left: 5px solid #d32f2f;">
+            <h3 style="color: #c62828; margin-bottom: 18px; font-size: 17px; font-weight: 700;">
+                <span style="font-size: 20px; margin-right: 8px;">⚠️</span>주요 재무 이슈
+            </h3>
+            <div style="font-size: 14px; line-height: 1.9; color: #333;">
+                <strong style="color: #2e7d32;">1. 재고 대폭 개선</strong><br>
+                • 재고자산 186백만 HKD → 148백만 HKD (-20.6%, -38백만 HKD)<br>
+                • 과시즌 재고 소진 전략 본격화로 재고 부담 완화<br>
+                • 현금흐름 개선 및 보관비용 절감 효과<br><br>
+                
+                <strong style="color: #f57c00;">2. 현금 유동성 주의</strong><br>
+                • 현금 32백만 HKD → 26백만 HKD (-18.7%, -6백만 HKD)<br>
+                • 월평균 임차료+인건비: 8.5백만 HKD (임차료 5.5 + 인건비 3.0)<br>
+                • 현금 보유 수준: 약 3.1개월분<br>
+                • 대본사채무 최소화를 위해 현금보유수준은 최소로 유지<br>
+                • 단기 현금흐름 관리 지속 필요<br><br>
+                
+                <strong style="color: #2e7d32;">3. 자본 구조 개선</strong><br>
+                • 자본총계 12.3백만 HKD → 15.6백만 HKD (+26.8%, +3.3백만 HKD)<br>
+                • 이익잉여금 적자 -4.5백만 HKD → -4.4백만 HKD로 소폭 축소<br>
+                • 기타자본 -3.1백만 HKD → 0백만 HKD로 정상화 완료<br>
+                • 자본잠식률 개선: 52.5% → 21.9%<br><br>
+                
+                <strong style="color: #f57c00;">4. 부채 구조 변화</strong><br>
+                • 총부채 343백만 HKD → 349백만 HKD (+1.9%, +6.5백만 HKD)<br>
+                • 유동부채 314백만 HKD → 286백만 HKD (-8.8%, -28백만 HKD) - 개선<br>
+                • 매입채무 134백만 HKD → 114백만 HKD (-15.1%, -20백만 HKD) - 개선<br>
+                • 비유동부채 29백만 HKD → 63백만 HKD (+117%, +34백만 HKD) - 증가<br>
+                • 리스부채 대폭 증가: 59백만 HKD → 103백만 HKD (+73%, +44백만 HKD)<br><br>
+                
+                <strong style="color: #2e7d32;">5. 매출채권 회수 호조</strong><br>
+                • 매출채권 21백만 HKD → 39백만 HKD (+86%, +18백만 HKD)<br>
+                • 25년 4Q 매출 증가에 따른 자연스러운 증가<br>
+                • 전액 대만 백화점 정상채권(D+45DAYS)<br><br>
+                
+                <strong style="color: #f57c00;">6. 리스부채 증가</strong><br>
+                • 사용권자산 60백만 HKD → 87백만 HKD (+44%, +27백만 HKD)<br>
+                • 리스부채 합계 59백만 HKD → 103백만 HKD (+73%, +44백만 HKD)<br>
+                • 신규 매장 계약 및 기존 매장 갱신으로 장기 리스 증가<br>
+                • 안정적 매장 운영 기반 확보
+            </div>
+        </div>
+    </div>
+
+    <div id="cf-sheet" class="sheet-container">
+        <h1>3. 현금흐름표</h1>
+        
+        <div style="margin-bottom: 25px; padding: 20px; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); border-radius: 8px; box-shadow: 0 4px 15px rgba(30,60,114,0.25);">
+            <div style="text-align: center; color: white;">
+                <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px; opacity: 0.9;">📌 현금흐름 한줄 요약 (24년 → 25년 E)</div>
+                <div style="font-size: 16px; font-weight: 700; line-height: 1.5;">
+                    영업활동 현금흐름 12.1백만 HKD로 전년비 41% 감소(1~10월 11.1백만 창출 후 11~12월 1.0백만 소진 예상),<br>
+                    투자활동 26.6백만 HKD 지출(1~10월 24.6백만 집행, 11~12월 2.0백만 예정)로<br>
+                    기말현금 26.1백만 HKD 기록 (전년 33.1백만 대비 21% 감소, 10월 26.5백만 → 12월 26.1백만)
+                </div>
+            </div>
+        </div>
+        
+        <button class="toggle-all" id="toggle-cf">전체 접기/펴기</button>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 20%;">구분</th>
+                    <th style="width: 16%; background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);">2024년 (천 HKD)</th>
+                    <th style="width: 16%; background: linear-gradient(135deg, #757575 0%, #616161 100%);">25년 1~10월 (천 HKD)</th>
+                    <th style="width: 16%; background: linear-gradient(135deg, #757575 0%, #616161 100%);">25년 11-12월 (천 HKD)</th>
+                    <th style="width: 16%; background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);">2025년 (천 HKD)</th>
+                    <th style="width: 16%;">YOY (25년-24년)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr style="background: linear-gradient(135deg, #fff9e6 0%, #fff3cd 100%); font-weight: 700;">
+                    <td style="text-align: center; color: #1e3c72; font-size: 14px;">기초현금</td>
+                    <td>28,195</td>
+                    <td style="background: #e0e0e0;">33,146</td>
+                    <td style="background: #e0e0e0;">26,458</td>
+                    <td>33,146</td>
+                    <td class="positive">+4,951</td>
+                </tr>
+                
+                <tr class="section-header" data-section="opcf" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);">
+                    <td style="font-weight: 700;">1. 영업활동 현금흐름</td>
+                    <td class="positive" style="font-weight: 700;">20,549</td>
+                    <td class="positive" style="font-weight: 700; background: #eeeeee;">11,099</td>
+                    <td class="positive" style="font-weight: 700; background: #eeeeee;">998</td>
+                    <td class="positive" style="font-weight: 700;">12,097</td>
+                    <td class="negative" style="font-weight: 700;">△8,452</td>
+                </tr>
+                
+                <tr class="subsection-row opcf-row hidden" style="background: white; font-weight: 600;">
+                    <td style="padding-left: 30px;">매출수금</td>
+                    <td>408,206</td>
+                    <td>327,093</td>
+                    <td>82,634</td>
+                    <td>409,727</td>
+                    <td class="positive">+1,521</td>
+                </tr>
+                
+                <tr class="subsection-row opcf-row hidden" style="background: white; font-weight: 600;">
+                    <td style="padding-left: 30px;">상품대 및 관세</td>
+                    <td class="negative">(206,609)</td>
+                    <td class="negative">(154,695)</td>
+                    <td class="negative">(43,229)</td>
+                    <td class="negative">(197,924)</td>
+                    <td class="positive">+8,685</td>
+                </tr>
+                
+                <tr class="subsection-row opcf-row hidden" style="background: white; font-weight: 600;">
+                    <td style="padding-left: 30px;">운영비</td>
+                    <td class="negative">(189,711)</td>
+                    <td class="negative">(174,012)</td>
+                    <td class="negative">(37,828)</td>
+                    <td class="negative">(211,840)</td>
+                    <td class="negative">△22,129</td>
+                </tr>
+                
+                <tr class="subsection-row opcf-row hidden" style="background: white; font-weight: 600;">
+                    <td style="padding-left: 30px;">기타수입</td>
+                    <td>0</td>
+                    <td>0</td>
+                    <td>-</td>
+                    <td>0</td>
+                    <td>0</td>
+                </tr>
+                
+                <tr class="subsection-row opcf-row hidden" style="background: white; font-weight: 600;">
+                    <td style="padding-left: 30px;">법인세</td>
+                    <td>0</td>
+                    <td class="negative">(1,272)</td>
+                    <td>-</td>
+                    <td class="negative">(1,272)</td>
+                    <td class="negative">△1,272</td>
+                </tr>
+                
+                <tr class="section-header" data-section="invcf" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);">
+                    <td style="font-weight: 700;">2. 투자활동 현금흐름</td>
+                    <td class="negative" style="font-weight: 700;">-7,598</td>
+                    <td class="negative" style="font-weight: 700; background: #eeeeee;">-24,607</td>
+                    <td class="negative" style="font-weight: 700; background: #eeeeee;">-1,943</td>
+                    <td class="negative" style="font-weight: 700;">-26,550</td>
+                    <td class="negative" style="font-weight: 700;">△18,952</td>
+                </tr>
+                <tr class="subsection-row invcf-row hidden">
+                    <td style="padding-left: 30px;">홍콩 자산성지출</td>
+                    <td class="negative">-7,598</td>
+                    <td class="negative">-18,453</td>
+                    <td class="negative">-1,943</td>
+                    <td class="negative">-20,396</td>
+                    <td class="negative">△12,798</td>
+                </tr>
+                <tr class="subsection-row invcf-row hidden">
+                    <td style="padding-left: 30px;">대만 자산성지출</td>
+                    <td>0</td>
+                    <td class="negative">-6,154</td>
+                    <td>-</td>
+                    <td class="negative">-6,154</td>
+                    <td class="negative">△6,154</td>
+                </tr>
+                
+                <tr class="section-header" data-section="fincf" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);">
+                    <td style="font-weight: 700;">3. 재무활동 현금흐름</td>
+                    <td style="font-weight: 700;">0</td>
+                    <td style="font-weight: 700; background: #eeeeee;">0</td>
+                    <td style="font-weight: 700; background: #eeeeee;">0</td>
+                    <td style="font-weight: 700;">0</td>
+                    <td style="font-weight: 700;">0</td>
+                </tr>
+                
+                <tr class="total-row">
+                    <td>기말현금</td>
+                    <td>33,146</td>
+                    <td style="background: #e0e0e0;">26,458</td>
+                    <td style="background: #e0e0e0;">26,092</td>
+                    <td style="background-color: #fff9c4; font-weight: 700;">26,092</td>
+                    <td class="negative">△7,054</td>
+                </tr>
+                <tr class="subsection-row hidden" style="background: #f5f5f5;">
+                    <td style="padding-left: 30px;">홍콩 기말현금</td>
+                    <td>25,418</td>
+                    <td>21,314</td>
+                    <td>19,550</td>
+                    <td>19,550</td>
+                    <td class="negative">△5,868</td>
+                </tr>
+                <tr class="subsection-row hidden" style="background: #f5f5f5;">
+                    <td style="padding-left: 30px;">대만 기말현금</td>
+                    <td>7,728</td>
+                    <td>5,144</td>
+                    <td>6,543</td>
+                    <td>6,543</td>
+                    <td class="negative">△1,185</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div style="margin-top: 30px; padding: 25px; background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border-radius: 8px; border-left: 5px solid #4caf50;">
+            <h3 style="color: #2e7d32; margin-bottom: 20px; font-size: 17px; font-weight: 700;">
+                <span style="font-size: 20px; margin-right: 8px;">💵</span>현금흐름 분석
+            </h3>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; font-size: 14px;">
+                <div style="background: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+                    <div style="color: #666; font-size: 13px; margin-bottom: 8px;">영업활동 현금흐름</div>
+                    <div style="font-size: 22px; font-weight: 700; color: #d32f2f;">12.1백만 HKD</div>
+                    <div style="color: #999; font-size: 12px; margin-top: 4px;">전년: 20.5백만 HKD</div>
+                    <div style="color: #d32f2f; font-size: 12px; margin-top: 6px; font-weight: 600;">△8.4백만 HKD (-41.1%)</div>
+                </div>
+                <div style="background: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+                    <div style="color: #666; font-size: 13px; margin-bottom: 8px;">투자활동 현금흐름</div>
+                    <div style="font-size: 22px; font-weight: 700; color: #d32f2f;">-26.6백만 HKD</div>
+                    <div style="color: #999; font-size: 12px; margin-top: 4px;">전년: -7.6백만 HKD</div>
+                    <div style="color: #d32f2f; font-size: 12px; margin-top: 6px; font-weight: 600;">△19.0백만 HKD (+249%)</div>
+                </div>
+                <div style="background: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+                    <div style="color: #666; font-size: 13px; margin-bottom: 8px;">기말 현금 보유액</div>
+                    <div style="font-size: 22px; font-weight: 700; color: #d32f2f;">26.1백만 HKD</div>
+                    <div style="color: #999; font-size: 12px; margin-top: 4px;">전년: 33.1백만 HKD</div>
+                    <div style="color: #d32f2f; font-size: 12px; margin-top: 6px; font-weight: 600;">△7.1백만 HKD (-21.3%)</div>
+                </div>
+            </div>
+            <div style="margin-top: 18px; padding-top: 18px; border-top: 1px solid #a5d6a7; color: #666; font-size: 13px; line-height: 1.7;">
+                <strong style="color: #2e7d32;">💡 주요 포인트:</strong><br>
+                • <strong>영업현금 대폭 감소:</strong> 20.5백만 HKD → 12.1백만 HKD (전년비 -41.1%)<br>
+                • <strong>매출수금:</strong> 409.7백만 HKD (전년비 +0.4%)<br>
+                • <strong>상품대 및 관세:</strong> 197.9백만 HKD (내부거래 제거 후, 전년비 -4.2%)<br>
+                • <strong>운영비:</strong> 211.8백만 HKD (전년비 +11.7%, 대만 진출 영향)<br>
+                • <strong>투자활동 증가:</strong> 총 26.6백만 HKD (신규 매장 투자)<br>
+                • <strong>재무활동:</strong> 차입금 입출금 없음 (무차입 경영 유지)<br>
+                • <strong>현금 감소:</strong> 기초 28.2백만 HKD → 기말 26.1백만 HKD (△2.1백만 HKD, -7.4%)<br>
+                • <strong>대만 법인세:</strong> 1.3백만 HKD 납부
+            </div>
+        </div>
+        
+        <div style="margin-top: 20px; padding: 25px; background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border-radius: 8px; border-left: 5px solid #f57c00;">
+            <h3 style="color: #e65100; margin-bottom: 18px; font-size: 17px; font-weight: 700;">
+                <span style="font-size: 20px; margin-right: 8px;">⚠️</span>현금흐름 주의사항
+            </h3>
+            <div style="font-size: 14px; line-height: 1.9; color: #333;">
+                <strong style="color: #f57c00;">1. 현금 보유 수준 감소</strong><br>
+                • 기말 현금 26.1백만 HKD (홍콩 19.6백만 + 대만 6.5백만)<br>
+                • 전년 대비 7.1백만 HKD 감소 (-21.3%)<br>
+                • 홍콩 월평균 운영비: 약 13.6백만 HKD<br>
+                • 대만 월평균 운영비: 약 4.0백만 HKD<br>
+                • 현금 보유 수준: 약 1.5개월분 운영비<br><br>
+                
+                <strong style="color: #f57c00;">2. 투자활동 지출 대폭 증가</strong><br>
+                • 자산성지출 26.6백만 HKD (전년 7.6백만 대비 +249%)<br>
+                • 홍콩: 20.4백만 HKD (보증금 4.9백만 + 인테리어 11.6백만 + 기타 3.9백만)<br>
+                • 대만: 6.2백만 HKD (인테리어 중심)<br>
+                • 디스커버리 신규점 및 기존점 리뉴얼 투자 집중<br><br>
+                
+                <strong style="color: #d32f2f;">3. 영업현금흐름 대폭 감소</strong><br>
+                • 영업활동 현금흐름 12.1백만 HKD (전년비 -41.1%)<br>
+                • 매출수금 소폭 증가(+1.5백만) 대비 운영비 대폭 증가(+22.1백만)<br>
+                • 대만 신규 진출로 운영비 부담 증가 (대만 법인 운영비 48.5백만 추가)<br>
+                • 재고 관리 효율화 및 운영비 절감 시급
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.sheet-container').forEach(s => s.classList.remove('active'));
+                
+                this.classList.add('active');
+                const sheetName = this.getAttribute('data-sheet');
+                document.getElementById(sheetName + '-sheet').classList.add('active');
+            });
+        });
+        
+        document.querySelectorAll('.section-header').forEach(header => {
+            header.addEventListener('click', function() {
+                const section = this.getAttribute('data-section');
+                const rows = document.querySelectorAll('.' + section + '-row');
+                
+                this.classList.toggle('collapsed');
+                rows.forEach(row => row.classList.toggle('hidden'));
+            });
+        });
+        
+        const togglePL = document.getElementById('toggle-pl');
+        if (togglePL) {
+            togglePL.addEventListener('click', function() {
+                const container = document.getElementById('pl-sheet');
+                const headers = container.querySelectorAll('.section-header');
+                const rows = container.querySelectorAll('.subsection-row');
+                
+                const anyHidden = Array.from(rows).some(r => r.classList.contains('hidden'));
+                
+                headers.forEach(h => anyHidden ? h.classList.remove('collapsed') : h.classList.add('collapsed'));
+                rows.forEach(r => anyHidden ? r.classList.remove('hidden') : r.classList.add('hidden'));
+            });
+        }
+        
+        const togglePL3Q = document.getElementById('toggle-pl3q');
+        if (togglePL3Q) {
+            togglePL3Q.addEventListener('click', function() {
+                const container = document.getElementById('pl3q-sheet');
+                const headers = container.querySelectorAll('.section-header');
+                const rows = container.querySelectorAll('.subsection-row');
+                
+                const anyHidden = Array.from(rows).some(r => r.classList.contains('hidden'));
+                
+                headers.forEach(h => anyHidden ? h.classList.remove('collapsed') : h.classList.add('collapsed'));
+                rows.forEach(r => anyHidden ? r.classList.remove('hidden') : r.classList.add('hidden'));
+            });
+        }
+        
+        const toggleBS = document.getElementById('toggle-bs');
+        if (toggleBS) {
+            toggleBS.addEventListener('click', function() {
+                const container = document.getElementById('bs-sheet');
+                const headers = container.querySelectorAll('.section-header');
+                const rows = container.querySelectorAll('.subsection-row');
+                
+                const anyHidden = Array.from(rows).some(r => r.classList.contains('hidden'));
+                
+                headers.forEach(h => anyHidden ? h.classList.remove('collapsed') : h.classList.add('collapsed'));
+                rows.forEach(r => anyHidden ? r.classList.remove('hidden') : r.classList.add('hidden'));
+            });
+        }
+        
+        const toggleCF = document.getElementById('toggle-cf');
+        if (toggleCF) {
+            toggleCF.addEventListener('click', function() {
+                const container = document.getElementById('cf-sheet');
+                const headers = container.querySelectorAll('.section-header');
+                const rows = container.querySelectorAll('.subsection-row');
+                
+                const anyHidden = Array.from(rows).some(r => r.classList.contains('hidden'));
+                
+                headers.forEach(h => anyHidden ? h.classList.remove('collapsed') : h.classList.add('collapsed'));
+                rows.forEach(r => anyHidden ? r.classList.remove('hidden') : r.classList.add('hidden'));
+            });
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.section-header').forEach(h => h.classList.add('collapsed'));
+        });
+    </script>
+</body>
+</html>
